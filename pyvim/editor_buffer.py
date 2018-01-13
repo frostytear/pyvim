@@ -1,8 +1,7 @@
 from __future__ import unicode_literals
 from prompt_toolkit.document import Document
 
-from prompt_toolkit.buffer import Buffer, AcceptAction
-from prompt_toolkit.filters import Always
+from prompt_toolkit.buffer import Buffer
 from pyvim.completion import DocumentCompleter
 
 from six import string_types
@@ -22,14 +21,12 @@ class EditorBuffer(object):
     A 'prompt-toolkit' `Buffer` doesn't know anything about files, changes,
     etc... This wrapper contains the necessary data for the editor.
     """
-    def __init__(self, editor, buffer_name, location=None, text=None):
-        assert isinstance(buffer_name, string_types)
+    def __init__(self, editor, location=None, text=None):
         assert location is None or isinstance(location, string_types)
         assert text is None or isinstance(text, string_types)
         assert not (location and text)
 
         self._editor_ref = weakref.ref(editor)
-        self.buffer_name = buffer_name
         self.location = location
         self.encoding = 'utf-8'
 
@@ -46,10 +43,9 @@ class EditorBuffer(object):
 
         # Create Buffer.
         self.buffer = Buffer(
-            is_multiline=Always(),
+            multiline=True,
             completer=DocumentCompleter(editor, self),
-            initial_document=Document(text, 0),
-            accept_action=AcceptAction.IGNORE)
+            document=Document(text, 0))
 
         # List of reporting errors.
         self.report_errors = []
@@ -149,6 +145,4 @@ class EditorBuffer(object):
             return self.location
 
     def __repr__(self):
-        return '%s(buffer_name=%r, buffer=%r)' % (
-            self.__class__.__name__,
-            self.buffer_name, self.buffer)
+        return '%s(buffer=%r)' % (self.__class__.__name__, self.buffer)

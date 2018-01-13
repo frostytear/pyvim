@@ -221,7 +221,7 @@ def buffer_list(editor):
             print(' %3i %-2s %-20s  line %i' % (
                   info.index, char, eb.location, (eb.buffer.document.cursor_position_row + 1)))
         six.moves.input('\nPress ENTER to continue...')
-    editor.cli.run_in_terminal(handler)
+    editor.application.run_in_terminal(handler)
 
 
 @_cmd('b')
@@ -293,7 +293,7 @@ def quit(editor, all_=False, force=False):
         editor.show_message('%i more files to edit' % (len(ebs) - 1))
 
     else:
-        editor.cli.set_return_value('')
+        editor.application.set_return_value('')
 
 
 @cmd('qa', accepts_force=True)
@@ -327,7 +327,7 @@ def write_and_quit(editor, location, force=False):
     Write file and quit.
     """
     write(editor, location, force=force)
-    editor.cli.set_return_value('')
+    editor.application.set_return_value(None)
 
 
 @cmd('cq')
@@ -338,7 +338,7 @@ def quit_nonzero(editor):
     # Note: the try/finally in `prompt_toolkit.Interface.read_input`
     # will ensure that the render output is reset, leaving the alternate
     # screen before quiting.
-    sys.exit(1)
+    editor.application.set_return_value(None)
 
 
 @cmd('wqa')
@@ -624,14 +624,14 @@ def disable_mouse(editor):
 @set_cmd('top')
 def enable_tildeop(editor):
     " Enable tilde operator. "
-    editor.cli.vi_state.tilde_operator = True
+    editor.application.vi_state.tilde_operator = True
 
 
 @set_cmd('notildeop')
 @set_cmd('notop')
 def disable_tildeop(editor):
     " Disable tilde operator. "
-    editor.cli.vi_state.tilde_operator = False
+    editor.application.vi_state.tilde_operator = False
 
 
 @set_cmd('cursorline')

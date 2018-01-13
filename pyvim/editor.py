@@ -10,20 +10,18 @@ Usage::
 from __future__ import unicode_literals
 
 from prompt_toolkit.application import Application
-from prompt_toolkit.buffer import Buffer, AcceptAction
+from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import SEARCH_BUFFER, EditingMode
-from prompt_toolkit.filters import Always, Condition
+from prompt_toolkit.eventloop import call_from_executor, run_in_executor
+from prompt_toolkit.filters import Condition
 from prompt_toolkit.history import FileHistory
-from prompt_toolkit.interface import CommandLineInterface
 from prompt_toolkit.key_binding.vi_state import InputMode
-from prompt_toolkit.shortcuts import create_eventloop
 from prompt_toolkit.styles import DynamicStyle
 
 from .commands.completer import create_command_completer
 from .commands.handler import handle_command
 from .commands.preview import CommandPreviewer
 from .editor_buffer import EditorBuffer
-from .enums import COMMAND_BUFFER
 from .help import HELP_TEXT
 from .key_bindings import create_key_bindings
 from .layout import EditorLayout, get_terminal_title
@@ -86,24 +84,43 @@ class Editor(object):
             FileIO(),
         ]
 
-        # Create eventloop.
-        self.eventloop = create_eventloop()
+        # Create history and search buffers.
+        def handle_action(buff):
+            ' When enter is pressed in the Vi command line. '
+            text = buff.text  # Remember: leave_command_mode resets the buffer.
+
+            # First leave command mode. We want to make sure that the working
+            # pane is focussed again before executing the command handlers.
+            self.leave_command_mode(append_to_history=True)
+
+            # Execute command.
+            handle_command(self, text)
+
+        commands_history = FileHistory(os.path.join(self.config_directory, 'commands_history'))
+        self.command_buffer = Buffer(
+            accept_handler=handle_action,
+            enable_history_search=True,
+            completer=create_command_completer(self),
+            history=commands_history,
+            multiline=False)
+
+        search_buffer_history = FileHistory(os.path.join(self.config_directory, 'search_history'))
+        self.search_buffer = Buffer(
+            history=search_buffer_history,
+            enable_history_search=True,
+            multiline=False)
 
         # Create key bindings registry.
-        self.key_bindings_registry = create_key_bindings(self)
+        self.key_bindings = create_key_bindings(self)
 
         # Create layout and CommandLineInterface instance.
         self.editor_layout = EditorLayout(self, self.window_arrangement)
         self.application = self._create_application()
 
-        self.cli = CommandLineInterface(
-            eventloop=self.eventloop,
-            application=self.application)
-
         # Hide message when a key is pressed.
         def key_pressed(_):
             self.message = None
-        self.cli.input_processor.beforeKeyPress += key_pressed
+        self.application.key_processor.before_key_press += key_pressed
 
         # Command line previewer.
         self.previewer = CommandPreviewer(self)
@@ -139,56 +156,33 @@ class Editor(object):
         """
         Create CommandLineInterface instance.
         """
-        # Create Vi command buffer.
-        def handle_action(cli, buffer):
-            ' When enter is pressed in the Vi command line. '
-            text = buffer.text  # Remember: leave_command_mode resets the buffer.
-
-            # First leave command mode. We want to make sure that the working
-            # pane is focussed again before executing the command handlers.
-            self.leave_command_mode(append_to_history=True)
-
-            # Execute command.
-            handle_command(self, text)
-
-        # Create history and search buffers.
-        commands_history = FileHistory(os.path.join(self.config_directory, 'commands_history'))
-        command_buffer = Buffer(accept_action=AcceptAction(handler=handle_action),
-                                enable_history_search=Always(),
-                                completer=create_command_completer(self),
-                                history=commands_history)
-
-        search_buffer_history = FileHistory(os.path.join(self.config_directory, 'search_history'))
-        search_buffer = Buffer(history=search_buffer_history,
-                               enable_history_search=Always(),
-                               accept_action=AcceptAction.IGNORE)
-
-        # Create app.
-
-        # Create CLI.
+        # Create Application.
         application = Application(
             editing_mode=EditingMode.VI,
             layout=self.editor_layout.layout,
-            key_bindings_registry=self.key_bindings_registry,
-            get_title=lambda: get_terminal_title(self),
-            buffers={
-                COMMAND_BUFFER: command_buffer,
-                SEARCH_BUFFER: search_buffer,
-            },
+            key_bindings=self.key_bindings,
+#            get_title=lambda: get_terminal_title(self),
+#            buffers={
+#                COMMAND_BUFFER: self.command_buffer,
+#                SEARCH_BUFFER: self.search_buffer,
+#            },
             style=DynamicStyle(lambda: self.current_style),
-            paste_mode=Condition(lambda cli: self.paste_mode),
-            ignore_case=Condition(lambda cli: self.ignore_case),
-            mouse_support=Condition(lambda cli: self.enable_mouse_support),
-            use_alternate_screen=True,
-            on_buffer_changed=self._current_buffer_changed)
+            paste_mode=Condition(lambda: self.paste_mode),
+#            ignore_case=Condition(lambda: self.ignore_case),
+            mouse_support=Condition(lambda: self.enable_mouse_support),
+            full_screen=True,
+#            on_buffer_changed=self._current_buffer_changed,
+
+            enable_page_navigation_bindings=True,
+            )
 
         # Handle command line previews.
         # (e.g. when typing ':colorscheme blue', it should already show the
         # preview before pressing enter.)
         def preview(_):
-            if self.cli.current_buffer == command_buffer:
-                self.previewer.preview(command_buffer.text)
-        command_buffer.on_text_changed += preview
+            if self.application.layout.has_focus(self.command_buffer):
+                self.previewer.preview(self.command_buffer.text)
+        self.command_buffer.on_text_changed += preview
 
         return application
 
@@ -198,7 +192,7 @@ class Editor(object):
         Return the `EditorBuffer` that is currently active.
         """
         # For each buffer name on the focus stack.
-        for current_buffer_name in self.cli.buffers.focus_stack:
+        for current_buffer_name in self.application.buffers.focus_stack:
             if current_buffer_name is not None:
                 # Find/return the EditorBuffer with this name.
                 for b in self.window_arrangement.editor_buffers:
@@ -212,7 +206,7 @@ class Editor(object):
         (Mostly useful for a pyvimrc file, that receives this Editor instance
         as input.)
         """
-        return self.key_bindings_registry.add_binding
+        return self.key_bindings.add
 
     def show_message(self, message):
         """
@@ -240,10 +234,11 @@ class Editor(object):
 
         # Make sure that the focus stack of prompt-toolkit has the current
         # page.
-        self.cli.focus(
-            self.window_arrangement.active_editor_buffer.buffer_name)
+        window = self.window_arrangement.active_pt_window
+        if window:
+            self.application.layout.focus(window)
 
-    def _current_buffer_changed(self, cli):
+    def _current_buffer_changed(self):
         """
         Current buffer changed.
         """
@@ -258,6 +253,8 @@ class Editor(object):
         """
         Run reporter on input. (Asynchronously.)
         """
+        return  # XXX TODO
+
         assert isinstance(editor_buffer, EditorBuffer)
         eb = editor_buffer
         name = eb.buffer_name
@@ -289,10 +286,10 @@ class Editor(object):
                         self.cli.invalidate()
                     else:
                         # Restart reporter when the text was changed.
-                        self._current_buffer_changed(self.cli)
+                        self._current_buffer_changed()
 
-                self.cli.eventloop.call_from_executor(ready)
-            self.cli.eventloop.run_in_executor(in_executor)
+                call_from_executor(ready)
+            run_in_executor(in_executor)
 
     def show_help(self):
         """
@@ -311,17 +308,17 @@ class Editor(object):
 
         def pre_run():
             # Start in navigation mode.
-            self.cli.vi_state.input_mode = InputMode.NAVIGATION
+            self.application.vi_state.input_mode = InputMode.NAVIGATION
 
         # Run eventloop of prompt_toolkit.
-        self.cli.run(reset_current_buffer=False, pre_run=pre_run)
+        self.application.run(pre_run=pre_run)
 
     def enter_command_mode(self):
         """
         Go into command mode.
         """
-        self.cli.push_focus(COMMAND_BUFFER)
-        self.cli.vi_state.input_mode = InputMode.INSERT
+        self.application.layout.focus(self.command_buffer)
+        self.application.vi_state.input_mode = InputMode.INSERT
 
         self.previewer.save()
 
@@ -331,7 +328,7 @@ class Editor(object):
         """
         self.previewer.restore()
 
-        self.cli.pop_focus()
-        self.cli.vi_state.input_mode = InputMode.NAVIGATION
+        self.application.layout.focus_last()
+        self.application.vi_state.input_mode = InputMode.NAVIGATION
 
-        self.cli.buffers[COMMAND_BUFFER].reset(append_to_history=append_to_history)
+        self.command_buffer.reset(append_to_history=append_to_history)
