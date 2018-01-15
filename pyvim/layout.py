@@ -13,7 +13,6 @@ from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.margins import ConditionalMargin, NumberredMargin
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.processors import Processor, ConditionalProcessor, BeforeInput, ShowTrailingWhiteSpaceProcessor, Transformation, HighlightSelectionProcessor, HighlightSearchProcessor, HighlightMatchingBracketProcessor, TabsProcessor, DisplayMultipleCursors, merge_processors
-from prompt_toolkit.layout.screen import Char
 from prompt_toolkit.layout.utils import explode_text_fragments
 from prompt_toolkit.layout.widgets.toolbars import FormattedTextToolbar, SystemToolbar, SearchToolbar, ValidationToolbar, CompletionsToolbar
 from prompt_toolkit.mouse_events import MouseEventType
@@ -452,6 +451,9 @@ class EditorLayout(object):
             ]
         )
 
+        search_toolbar = SearchToolbar(vi_mode=True, search_buffer=editor.search_buffer)
+        self.search_control = search_toolbar.control
+
         self.layout = Layout(FloatContainer(
             content=HSplit([
                 TabsToolbar(editor),
@@ -459,7 +461,7 @@ class EditorLayout(object):
                 CommandLine(editor),
                 ReportMessageToolbar(editor),
                 SystemToolbar(),
-                SearchToolbar(vi_mode=True, search_buffer=editor.search_buffer),
+                search_toolbar,
             ]),
             floats=[
                 Float(right=0, height=1, bottom=0, width=5,
@@ -582,11 +584,13 @@ class EditorLayout(object):
             DisplayMultipleCursors(),
         ]
 
-        return BufferControl(lexer=DocumentLexer(editor_buffer),
-                             input_processor=merge_processors(input_processors),
-                             buffer=editor_buffer.buffer,
-                             preview_search=preview_search,
-                             focus_on_click=True)
+        return BufferControl(
+            lexer=DocumentLexer(editor_buffer),
+            input_processor=merge_processors(input_processors),
+            buffer=editor_buffer.buffer,
+            preview_search=preview_search,
+            search_buffer_control=self.search_control,
+            focus_on_click=True)
 
 
 class ReportingProcessor(Processor):

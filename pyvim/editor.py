@@ -242,7 +242,7 @@ class Editor(object):
         """
         Current buffer changed.
         """
-        name = self.cli.current_buffer_name
+        name = self.application.current_buffer_name
         eb = self.window_arrangement.get_editor_buffer_for_buffer_name(name)
 
         if eb is not None:
@@ -283,7 +283,7 @@ class Editor(object):
                     # reporter errors. (We were running in another thread.)
                     if text == eb.buffer.text:
                         eb.report_errors = report_errors
-                        self.cli.invalidate()
+                        self.application.invalidate()
                     else:
                         # Restart reporter when the text was changed.
                         self._current_buffer_changed()

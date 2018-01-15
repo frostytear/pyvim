@@ -50,7 +50,7 @@ def create_key_bindings(editor):
         """
         Indent current line.
         """
-        b = event.cli.current_buffer
+        b = event.application.current_buffer
 
         # Move to start of line.
         pos = b.document.get_start_of_line_position(after_whitespace=True)
