@@ -30,7 +30,7 @@ def handle_command(editor, input_string):
 
     elif shell_command is not None:
         # Handle shell commands.
-        editor.cli.run_system_command(shell_command)
+        editor.application.run_system_command(shell_command)
 
     elif has_command_handler(command):
         # Handle other 'normal' commands.

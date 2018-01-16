@@ -71,11 +71,11 @@ style_extensions = {
 
     # Buffer list
     'bufferlist':               'bg:#aaddaa #000000',
-    'bufferlist.title':         'underline',
-    'bufferlist.lineno':        '#666666',
-    'bufferlist.active':        'bg:#ccffcc',
-    'bufferlist.active.lineno': '#666666',
-    'bufferlist.searchmatch':   'bg:#eeeeaa',
+    'bufferlist title':         'underline',
+    'bufferlist lineno':        '#666666',
+    'bufferlist active':        'bg:#ccffcc',
+    'bufferlist active.lineno': '#666666',
+    'bufferlist searchmatch':   'bg:#eeeeaa',
 
     # Completions toolbar.
     'completions-toolbar':                    'bg:#aaddaa #000000',

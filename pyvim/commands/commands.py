@@ -1,7 +1,7 @@
 from __future__ import unicode_literals, print_function
+from prompt_toolkit.application import run_in_terminal
 import os
 import six
-import sys
 
 __all__ = (
     'has_command_handler',
@@ -221,7 +221,7 @@ def buffer_list(editor):
             print(' %3i %-2s %-20s  line %i' % (
                   info.index, char, eb.location, (eb.buffer.document.cursor_position_row + 1)))
         six.moves.input('\nPress ENTER to continue...')
-    editor.application.run_in_terminal(handler)
+    run_in_terminal(handler)
 
 
 @_cmd('b')

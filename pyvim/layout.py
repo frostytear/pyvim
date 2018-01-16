@@ -158,8 +158,6 @@ class BufferListOverlay(ConditionalContainer):
     inside the vim command line.
     """
     def __init__(self, editor):
-        token = Token.BufferList
-
         def highlight_location(location, search_string, default_token):
             """
             Return a tokenlist with the `search_string` highlighted.
@@ -169,7 +167,7 @@ class BufferListOverlay(ConditionalContainer):
             # Replace token of matching positions.
             for m in re.finditer(re.escape(search_string), location):
                 for i in range(m.start(), m.end()):
-                    result[i] = (token.SearchMatch, result[i][1])
+                    result[i] = ('class:searchmatch', result[i][1])
             return result
 
         def get_tokens():
@@ -207,13 +205,13 @@ class BufferListOverlay(ConditionalContainer):
 
             # Render output.
             if len(buffer_infos) == 0:
-                return [(token, ' No match found. ')]
+                return [('', ' No match found. ')]
             else:
                 result = []
 
                 # Create title.
-                result.append((token, '  '))
-                result.append((token.Title, 'Open buffers\n'))
+                result.append(('', '  '))
+                result.append(('class:title', 'Open buffers\n'))
 
                 # Get length of longest location
                 max_location_len = max(len(info.editor_buffer.get_display_name()) for info in buffer_infos)
@@ -224,10 +222,10 @@ class BufferListOverlay(ConditionalContainer):
                     char = '%' if info.is_active else ' '
                     char2 = 'a' if info.is_visible else ' '
                     char3 = ' + ' if info.editor_buffer.has_unsaved_changes else '   '
-                    t = token.Active if info.is_active else token
+                    t = 'class:active' if info.is_active else ''
 
                     result.extend([
-                        (token, ' '),
+                        ('', ' '),
                         (t, '%3i ' % info.index),
                         (t, '%s' % char),
                         (t, '%s ' % char2),
@@ -236,14 +234,14 @@ class BufferListOverlay(ConditionalContainer):
                     result.extend(highlight_location(eb.get_display_name(), search_string, t))
                     result.extend([
                         (t, ' ' * (max_location_len - len(eb.get_display_name()))),
-                        (t.Lineno, '  line %i' % (eb.buffer.document.cursor_position_row + 1)),
+                        (t + ' class:lineno', '  line %i' % (eb.buffer.document.cursor_position_row + 1)),
                         (t, ' \n')
                     ])
                 return result
 
         super(BufferListOverlay, self).__init__(
-            Window(FormattedTextControl(get_tokens)),
-            style='class:bufferlist',
+            Window(FormattedTextControl(get_tokens),
+                   style='class:bufferlist'),
             filter=_bufferlist_overlay_visible(editor))
 
 
@@ -328,8 +326,7 @@ class WindowStatusBar(FormattedTextToolbar):
             ])
         super(WindowStatusBar, self).__init__(
                 get_tokens,
-                style='class:toolbar.status',
-                )#char=' ')
+                style='class:toolbar.status')
 
 
 class WindowStatusBarRuler(ConditionalContainer):
@@ -433,13 +430,12 @@ class EditorLayout(object):
                       content=CompletionsMenu(max_height=12,
                                               scroll_offset=2,
                                               extra_filter=~has_focus(editor.command_buffer))),
-# XXX TODO
-#                Float(content=BufferListOverlay(editor), bottom=1, left=0),
+                Float(content=BufferListOverlay(editor), bottom=1, left=0),
                 Float(bottom=1, left=0, right=0, height=1,
                       content=ConditionalContainer(
                           CompletionsToolbar(),
                           filter=has_focus(editor.command_buffer) &
-#                                       ~_bufferlist_overlay_visible(editor) &
+                                       ~_bufferlist_overlay_visible(editor) &
                                        Condition(lambda: editor.show_wildmenu))),
                 Float(bottom=1, left=0, right=0, height=1,
                       content=ValidationToolbar()),
