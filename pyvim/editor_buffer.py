@@ -1,8 +1,11 @@
 from __future__ import unicode_literals
-from prompt_toolkit.document import Document
-
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.document import Document
+from prompt_toolkit.eventloop import call_from_executor, run_in_executor
+
 from pyvim.completion import DocumentCompleter
+from pyvim.reporting import report
 
 from six import string_types
 
@@ -45,10 +48,12 @@ class EditorBuffer(object):
         self.buffer = Buffer(
             multiline=True,
             completer=DocumentCompleter(editor, self),
-            document=Document(text, 0))
+            document=Document(text, 0),
+            on_text_changed=lambda _: self.run_reporter())
 
         # List of reporting errors.
         self.report_errors = []
+        self._reporter_is_running = False
 
     @property
     def editor(self):
@@ -146,3 +151,38 @@ class EditorBuffer(object):
 
     def __repr__(self):
         return '%s(buffer=%r)' % (self.__class__.__name__, self.buffer)
+
+    def run_reporter(self):
+        " Buffer text changed. "
+        if not self._reporter_is_running:
+            self._reporter_is_running = True
+
+            text = self.buffer.text
+            self.report_errors = []
+
+            # Don't run reporter when we don't have a location. (We need to
+            # know the filetype, actually.)
+            if self.location is None:
+                return
+
+            # Better not to access the document in an executor.
+            document = self.buffer.document
+
+            def in_executor():
+                # Call reporter
+                report_errors = report(self.location, document)
+
+                def ready():
+                    self._reporter_is_running = False
+
+                    # If the text has not been changed yet in the meantime, set
+                    # reporter errors. (We were running in another thread.)
+                    if text == self.buffer.text:
+                        self.report_errors = report_errors
+                        get_app().invalidate()
+                    else:
+                        # Restart reporter when the text was changed.
+                        self.run_reporter()
+
+                call_from_executor(ready)
+            run_in_executor(in_executor)

@@ -663,9 +663,12 @@ def disable_cursorcolumn(editor):
 @set_cmd('cc', accepts_value=True)
 def set_scroll_offset(editor, value):
     try:
-        value = [int(val) for val in value.split(',')]
+        if value:
+            numbers = [int(val) for val in value.split(',')]
+        else:
+            numbers = []
     except ValueError:
         editor.show_message(
             'Invalid value. Expecting comma separated list of integers')
     else:
-        editor.colorcolumn = value
+        editor.colorcolumn = numbers

@@ -400,7 +400,7 @@ class WindowArrangement(object):
             self.active_tab.show_editor_buffer(editor_buffer)
 
         # Start reporter.
-        self.editor.run_reporter_for_editor_buffer(editor_buffer)
+        editor_buffer.run_reporter()
 
     def _get_or_create_editor_buffer(self, location=None, text=None):
         """

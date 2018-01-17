@@ -11,8 +11,7 @@ from __future__ import unicode_literals
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.enums import SEARCH_BUFFER, EditingMode
-from prompt_toolkit.eventloop import call_from_executor, run_in_executor
+from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.filters import Condition
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.key_binding.vi_state import InputMode
@@ -21,11 +20,9 @@ from prompt_toolkit.styles import DynamicStyle
 from .commands.completer import create_command_completer
 from .commands.handler import handle_command
 from .commands.preview import CommandPreviewer
-from .editor_buffer import EditorBuffer
 from .help import HELP_TEXT
 from .key_bindings import create_key_bindings
 from .layout import EditorLayout, get_terminal_title
-from .reporting import report
 from .style import generate_built_in_styles, get_editor_style_by_name
 from .window_arrangement import WindowArrangement
 from .io import FileIO, DirectoryIO, HttpIO, GZipFileIO
@@ -68,7 +65,6 @@ class Editor(object):
         if not os.path.exists(self.config_directory):
             os.mkdir(self.config_directory)
 
-        self._reporters_running_for_buffer_names = set()
         self.window_arrangement = WindowArrangement(self)
         self.message = None
 
@@ -162,19 +158,12 @@ class Editor(object):
             layout=self.editor_layout.layout,
             key_bindings=self.key_bindings,
 #            get_title=lambda: get_terminal_title(self),
-#            buffers={
-#                COMMAND_BUFFER: self.command_buffer,
-#                SEARCH_BUFFER: self.search_buffer,
-#            },
             style=DynamicStyle(lambda: self.current_style),
             paste_mode=Condition(lambda: self.paste_mode),
 #            ignore_case=Condition(lambda: self.ignore_case),
             mouse_support=Condition(lambda: self.enable_mouse_support),
             full_screen=True,
-#            on_buffer_changed=self._current_buffer_changed,
-
-            enable_page_navigation_bindings=True,
-            )
+            enable_page_navigation_bindings=True)
 
         # Handle command line previews.
         # (e.g. when typing ':colorscheme blue', it should already show the
@@ -237,59 +226,6 @@ class Editor(object):
         window = self.window_arrangement.active_pt_window
         if window:
             self.application.layout.focus(window)
-
-    def _current_buffer_changed(self):
-        """
-        Current buffer changed.
-        """
-        name = self.application.current_buffer_name
-        eb = self.window_arrangement.get_editor_buffer_for_buffer_name(name)
-
-        if eb is not None:
-            # Run reporter.
-            self.run_reporter_for_editor_buffer(eb)
-
-    def run_reporter_for_editor_buffer(self, editor_buffer):
-        """
-        Run reporter on input. (Asynchronously.)
-        """
-        return  # XXX TODO
-
-        assert isinstance(editor_buffer, EditorBuffer)
-        eb = editor_buffer
-        name = eb.buffer_name
-
-        if name not in self._reporters_running_for_buffer_names:
-            text = eb.buffer.text
-            self._reporters_running_for_buffer_names.add(name)
-            eb.report_errors = []
-
-            # Don't run reporter when we don't have a location. (We need to
-            # know the filetype, actually.)
-            if eb.location is None:
-                return
-
-            # Better not to access the document in an executor.
-            document = eb.buffer.document
-
-            def in_executor():
-                # Call reporter
-                report_errors = report(eb.location, document)
-
-                def ready():
-                    self._reporters_running_for_buffer_names.remove(name)
-
-                    # If the text has not been changed yet in the meantime, set
-                    # reporter errors. (We were running in another thread.)
-                    if text == eb.buffer.text:
-                        eb.report_errors = report_errors
-                        self.application.invalidate()
-                    else:
-                        # Restart reporter when the text was changed.
-                        self._current_buffer_changed()
-
-                call_from_executor(ready)
-            run_in_executor(in_executor)
 
     def show_help(self):
         """

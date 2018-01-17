@@ -133,7 +133,10 @@ class WelcomeMessageWindow(ConditionalContainer):
             return result
 
         super(WelcomeMessageWindow, self).__init__(
-            Window(FormattedTextControl(lambda: WELCOME_MESSAGE_TOKENS)),
+            Window(
+                FormattedTextControl(lambda: WELCOME_MESSAGE_TOKENS),
+                align=Align.CENTER,
+                style="class:welcome"),
             filter=Condition(condition))
 
 
@@ -267,7 +270,7 @@ class ReportMessageToolbar(ConditionalContainer):
     (It shows the error message, related to the current line.)
     """
     def __init__(self, editor):
-        def get_tokens():
+        def get_formatted_text():
             eb = editor.window_arrangement.active_editor_buffer
 
             lineno = eb.buffer.document.cursor_position_row
@@ -275,12 +278,12 @@ class ReportMessageToolbar(ConditionalContainer):
 
             for e in errors:
                 if e.lineno == lineno:
-                    return e.message_token_list
+                    return e.formatted_text
 
             return []
 
         super(ReportMessageToolbar, self).__init__(
-                FormattedTextToolbar(get_tokens),
+                FormattedTextToolbar(get_formatted_text),
                 filter=~has_focus(editor.command_buffer) & ~is_searching & ~has_focus('system'))
 
 
@@ -597,7 +600,6 @@ class ReportingProcessor(Processor):
         self.editor_buffer = editor_buffer
 
     def apply_transformation(self, transformation_input): 
-        #document, lineno, source_to_display, tokens):
         fragments = transformation_input.fragments
 
         if self.editor_buffer.report_errors:

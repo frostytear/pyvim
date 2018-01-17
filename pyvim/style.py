@@ -56,10 +56,10 @@ style_extensions = {
     'message':                'bg:#bbee88 #222222',
 
     # Welcome message
-    'welcome.title':          'underline',
-    'welcome.body':           '',
-    'welcome.body.key':       '#0000ff',
-    'welcome.pythonversion':  'bg:#888888 #ffffff',
+    'welcome title':          'underline',
+    'welcome version':        '#8800ff',
+    'welcome key':            '#0000ff',
+    'welcome pythonversion':  'bg:#888888 #ffffff',
 
     # Tabs
     'tabbar':                 'noinherit reverse',
