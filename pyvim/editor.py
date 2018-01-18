@@ -70,7 +70,7 @@ class Editor(object):
 
         # Load styles. (Mapping from name to Style class.)
         self.styles = generate_built_in_styles()
-        self.current_style = get_editor_style_by_name('default')
+        self.current_style = get_editor_style_by_name('vim')
 
         # I/O backends.
         self.io_backends = [
@@ -160,7 +160,8 @@ class Editor(object):
 #            get_title=lambda: get_terminal_title(self),
             style=DynamicStyle(lambda: self.current_style),
             paste_mode=Condition(lambda: self.paste_mode),
-#            ignore_case=Condition(lambda: self.ignore_case),
+#            ignore_case=Condition(lambda: self.ignore_case),  # TODO
+            include_default_pygments_style=False,
             mouse_support=Condition(lambda: self.enable_mouse_support),
             full_screen=True,
             enable_page_navigation_bindings=True)

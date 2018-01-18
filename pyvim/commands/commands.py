@@ -400,6 +400,13 @@ def tab_previous(editor):
     editor.window_arrangement.go_to_previous_tab()
 
 
+@cmd('pwd')
+def pwd(editor):
+    " Print working directory. "
+    directory = os.getcwd()
+    editor.show_message('{}'.format(directory))
+
+
 @_cmd('colorscheme')
 @_cmd('colo')
 def color_scheme(editor, variables):

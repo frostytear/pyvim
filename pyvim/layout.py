@@ -6,7 +6,7 @@ from prompt_toolkit.application.current import get_app
 from prompt_toolkit.filters import has_focus, is_searching, Condition, has_arg
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.layout import HSplit, VSplit, FloatContainer, Float, Layout
-from prompt_toolkit.layout.containers import Window, ConditionalContainer, ScrollOffsets, ColorColumn, Align
+from prompt_toolkit.layout.containers import Window, ConditionalContainer, ScrollOffsets, ColorColumn, Align, ScrollOffsets
 from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.dimension import Dimension
@@ -171,6 +171,10 @@ class BufferListOverlay(ConditionalContainer):
             for m in re.finditer(re.escape(search_string), location):
                 for i in range(m.start(), m.end()):
                     result[i] = ('class:searchmatch', result[i][1])
+
+            if location == search_string:
+                result[0] = (result[0][0] + ' [SetCursorPosition]', result[0][1])
+
             return result
 
         def get_tokens():
@@ -244,7 +248,8 @@ class BufferListOverlay(ConditionalContainer):
 
         super(BufferListOverlay, self).__init__(
             Window(FormattedTextControl(get_tokens),
-                   style='class:bufferlist'),
+                   style='class:bufferlist',
+                   scroll_offsets=ScrollOffsets(top=1, bottom=1)),
             filter=_bufferlist_overlay_visible(editor))
 
 
@@ -328,8 +333,8 @@ class WindowStatusBar(FormattedTextToolbar):
                 mode(),
             ])
         super(WindowStatusBar, self).__init__(
-                get_tokens,
-                style='class:toolbar.status')
+            get_tokens,
+            style='class:toolbar.status')
 
 
 class WindowStatusBarRuler(ConditionalContainer):
@@ -496,15 +501,11 @@ class EditorLayout(object):
                 return frame
 
             elif isinstance(node, window_arrangement.VSplit):
-                children = []
-                for n in node:
-                    children.append(create_layout_from_node(n))
-                    children.append(
-                        Window(width=1,
-                               get_char=self.get_vertical_border_char,
-                               style='class:frameborder'))
-                children.pop()
-                return VSplit(children)
+                return VSplit(
+                    [create_layout_from_node(n) for n in node],
+                    padding=1,
+                    padding_char=self.get_vertical_border_char(),
+                    padding_style='class:frameborder')
 
             if isinstance(node, window_arrangement.HSplit):
                 return HSplit([create_layout_from_node(n) for n in node])
@@ -537,16 +538,15 @@ class EditorLayout(object):
             cursorcolumn=Condition(lambda: self.editor.cursorcolumn),
             get_colorcolumns=(
                 lambda: [ColorColumn(pos) for pos in self.editor.colorcolumn]),
-            width=Dimension(),  # TODO: Ignore content dimension.
-            height=Dimension(),  # TODO: Ignore content dimension.
-        )
+            ignore_content_width=True,
+            ignore_content_height=True)
 
         return HSplit([
             window,
             VSplit([
                 WindowStatusBar(self.editor, editor_buffer),
                 WindowStatusBarRuler(self.editor, window, editor_buffer.buffer),
-            ]),
+            ], width=Dimension()),  # Ignore actual status bar width.
         ]), window
 
     def _create_buffer_control(self, editor_buffer):
