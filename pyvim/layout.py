@@ -6,11 +6,11 @@ from prompt_toolkit.application.current import get_app
 from prompt_toolkit.filters import has_focus, is_searching, Condition, has_arg
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.layout import HSplit, VSplit, FloatContainer, Float, Layout
-from prompt_toolkit.layout.containers import Window, ConditionalContainer, ScrollOffsets, ColorColumn, Align, ScrollOffsets
+from prompt_toolkit.layout.containers import Window, ConditionalContainer, ColorColumn, Align, ScrollOffsets
 from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.dimension import Dimension
-from prompt_toolkit.layout.margins import ConditionalMargin, NumberredMargin
+from prompt_toolkit.layout.margins import ConditionalMargin, NumberedMargin
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.processors import Processor, ConditionalProcessor, BeforeInput, ShowTrailingWhiteSpaceProcessor, Transformation, HighlightSelectionProcessor, HighlightSearchProcessor, HighlightMatchingBracketProcessor, TabsProcessor, DisplayMultipleCursors, merge_processors
 from prompt_toolkit.layout.utils import explode_text_fragments
@@ -530,7 +530,7 @@ class EditorLayout(object):
                 bottom=Integer.from_callable(lambda: self.editor.scroll_offset)),
             wrap_lines=wrap_lines,
             left_margins=[ConditionalMargin(
-                    margin=NumberredMargin(
+                    margin=NumberedMargin(
                         display_tildes=True,
                         relative=Condition(lambda: self.editor.relative_number)),
                     filter=Condition(lambda: self.editor.show_line_numbers))],
