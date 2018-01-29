@@ -14,10 +14,10 @@ from prompt_toolkit.layout.margins import ConditionalMargin, NumberedMargin
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.processors import Processor, ConditionalProcessor, BeforeInput, ShowTrailingWhiteSpaceProcessor, Transformation, HighlightSelectionProcessor, HighlightSearchProcessor, HighlightMatchingBracketProcessor, TabsProcessor, DisplayMultipleCursors, merge_processors
 from prompt_toolkit.layout.utils import explode_text_fragments
-from prompt_toolkit.layout.widgets.toolbars import FormattedTextToolbar, SystemToolbar, SearchToolbar, ValidationToolbar, CompletionsToolbar
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.reactive import Integer
 from prompt_toolkit.selection import SelectionType
+from prompt_toolkit.widgets.toolbars import FormattedTextToolbar, SystemToolbar, SearchToolbar, ValidationToolbar, CompletionsToolbar
 
 from .commands.lexer import create_command_lexer
 from .lexer import DocumentLexer

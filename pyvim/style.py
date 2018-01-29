@@ -3,7 +3,7 @@ The styles, for the colorschemes.
 """
 from __future__ import unicode_literals
 from prompt_toolkit.styles import Style, merge_styles
-from prompt_toolkit.styles.pygments import style_from_pygments
+from prompt_toolkit.styles.pygments import style_from_pygments_cls
 
 from pygments.styles import get_all_styles, get_style_by_name
 
@@ -20,7 +20,7 @@ def get_editor_style_by_name(name):
     name.
     """
     return merge_styles([
-        style_from_pygments(get_style_by_name(name)),
+        style_from_pygments_cls(get_style_by_name(name)),
         Style.from_dict(style_extensions),
     ])
 
