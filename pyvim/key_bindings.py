@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from prompt_toolkit.application import get_app
-from prompt_toolkit.filters import Condition, has_focus, ViInsertMode, ViNavigationMode
+from prompt_toolkit.filters import Condition, has_focus, vi_insert_mode, vi_navigation_mode
 from prompt_toolkit.key_binding import KeyBindings
 
 __all__ = (
@@ -33,8 +33,8 @@ def create_key_bindings(editor):
             return False
         return True
 
-    in_insert_mode = ViInsertMode() & vi_buffer_focussed
-    in_navigation_mode = ViNavigationMode() & vi_buffer_focussed
+    in_insert_mode = vi_insert_mode & vi_buffer_focussed
+    in_navigation_mode = vi_navigation_mode & vi_buffer_focussed
 
     @kb.add('c-t')
     def _(event):
@@ -79,7 +79,7 @@ def create_key_bindings(editor):
         """
         editor.enter_command_mode()
 
-    @kb.add('tab', filter=ViInsertMode() &
+    @kb.add('tab', filter=vi_insert_mode &
             ~has_focus(editor.command_buffer) & whitespace_before_cursor_on_line)
     def autocomplete_or_indent(event):
         """
