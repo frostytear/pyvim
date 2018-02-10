@@ -2,7 +2,7 @@
 The welcome message. This is displayed when the editor opens without any files.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.layout.utils import fragment_list_len
+from prompt_toolkit.formatted_text.utils import fragment_list_len
 
 import prompt_toolkit
 import pyvim

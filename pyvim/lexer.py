@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from prompt_toolkit.layout.lexers import Lexer, SimpleLexer, PygmentsLexer
+from prompt_toolkit.lexers import Lexer, SimpleLexer, PygmentsLexer
 
 __all__ = (
     'DocumentLexer',
