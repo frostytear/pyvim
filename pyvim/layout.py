@@ -12,7 +12,7 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.margins import ConditionalMargin, NumberedMargin
 from prompt_toolkit.layout.menus import CompletionsMenu
-from prompt_toolkit.layout.processors import Processor, ConditionalProcessor, BeforeInput, ShowTrailingWhiteSpaceProcessor, Transformation, HighlightSelectionProcessor, HighlightSearchProcessor, HighlightMatchingBracketProcessor, TabsProcessor, DisplayMultipleCursors, merge_processors
+from prompt_toolkit.layout.processors import Processor, ConditionalProcessor, BeforeInput, ShowTrailingWhiteSpaceProcessor, Transformation, HighlightSelectionProcessor, HighlightSearchProcessor, HighlightIncrementalSearchProcessor, HighlightMatchingBracketProcessor, TabsProcessor, DisplayMultipleCursors, merge_processors
 from prompt_toolkit.layout.utils import explode_text_fragments
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.reactive import Integer
@@ -106,7 +106,7 @@ class CommandLine(ConditionalContainer):
             Window(
                 BufferControl(
                     buffer=editor.command_buffer,
-                    input_processor=BeforeInput(':'),
+                    input_processors=[BeforeInput(':')],
                     lexer=create_command_lexer()),
                 height=1),
             filter=has_focus(editor.command_buffer))
@@ -577,15 +577,18 @@ class EditorLayout(object):
             ReportingProcessor(editor_buffer),
             HighlightSelectionProcessor(),
             ConditionalProcessor(
-                HighlightSearchProcessor(preview_search=preview_search),
+                HighlightSearchProcessor(),
                 Condition(lambda: self.editor.highlight_search)),
+            ConditionalProcessor(
+                HighlightIncrementalSearchProcessor(),
+                Condition(lambda: self.editor.highlight_search) & preview_search),
             HighlightMatchingBracketProcessor(),
             DisplayMultipleCursors(),
         ]
 
         return BufferControl(
             lexer=DocumentLexer(editor_buffer),
-            input_processor=merge_processors(input_processors),
+            input_processors=input_processors,
             buffer=editor_buffer.buffer,
             preview_search=preview_search,
             search_buffer_control=self.search_control,
