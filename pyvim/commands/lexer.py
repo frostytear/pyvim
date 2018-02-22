@@ -16,7 +16,7 @@ def create_command_lexer():
     Lexer for highlighting of the command line.
     """
     return GrammarLexer(COMMAND_GRAMMAR, lexers={
-        'command': SimpleLexer('class:commandline.Command'),
+        'command': SimpleLexer('class:commandline.command'),
         'location': SimpleLexer('class:commandline.location'),
         'shell_command': PygmentsLexer(BashLexer),
     })

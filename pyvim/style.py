@@ -19,8 +19,13 @@ def get_editor_style_by_name(name):
     This raises `pygments.util.ClassNotFound` when there is no style with this
     name.
     """
+    if name == 'vim':
+        vim_style = Style.from_dict(default_vim_style)
+    else:
+        vim_style = style_from_pygments_cls(get_style_by_name(name))
+
     return merge_styles([
-        style_from_pygments_cls(get_style_by_name(name)),
+        vim_style,
         Style.from_dict(style_extensions),
     ])
 
@@ -80,6 +85,51 @@ style_extensions = {
     # Completions toolbar.
     'completions-toolbar':                    'bg:#aaddaa #000000',
     'completions-toolbar.arrow':              'bg:#aaddaa #000000 bold',
-    'compeltions-toolbar completion':         'bg:#aaddaa #000000',
+    'completions-toolbar completion':         'bg:#aaddaa #000000',
     'completions-toolbar current-completion': 'bg:#444444 #ffffff',
+}
+
+
+# Default 'vim' color scheme. Taken from the Pygments Vim colorscheme, but
+# modified to use mainly ANSI colors.
+default_vim_style = {
+    'pygments':                           '',
+    'pygments.whitespace':                '',
+    'pygments.comment':                   'ansiblue',
+    'pygments.comment.preproc':           'ansiyellow',
+    'pygments.comment.special':           'bold',
+
+    'pygments.keyword':                   '#999900',
+    'pygments.keyword.declaration':       'ansigreen',
+    'pygments.keyword.namespace':         'ansimagenta',
+    'pygments.keyword.pseudo':            '',
+    'pygments.keyword.type':              'ansigreen',
+
+    'pygments.operator':                  '',
+    'pygments.operator.word':             '',
+
+    'pygments.name':                      '',
+    'pygments.name.class':                'ansicyan',
+    'pygments.name.builtin':              'ansicyan',
+    'pygments.name.exception':            '',
+    'pygments.name.variable':             'ansicyan',
+    'pygments.name.function':             'ansicyan',
+
+    'pygments.literal':                   'ansired',
+    'pygments.string':                    'ansired',
+    'pygments.string.doc':                '',
+    'pygments.number':                    'ansimagenta',
+
+    'pygments.generic.heading':           'bold ansiblue',
+    'pygments.generic.subheading':        'bold ansimagenta',
+    'pygments.generic.deleted':           'ansired',
+    'pygments.generic.inserted':          'ansigreen',
+    'pygments.generic.error':             'ansibrightred',
+    'pygments.generic.emph':              'italic',
+    'pygments.generic.strong':            'bold',
+    'pygments.generic.prompt':            'bold ansiblue',
+    'pygments.generic.output':            'ansigray',
+    'pygments.generic.traceback':         '#04d',
+
+    'pygments.error':                     'border:ansired'
 }
