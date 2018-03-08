@@ -293,7 +293,7 @@ def quit(editor, all_=False, force=False):
         editor.show_message('%i more files to edit' % (len(ebs) - 1))
 
     else:
-        editor.application.set_return_value('')
+        editor.application.set_result(None)
 
 
 @cmd('qa', accepts_force=True)
@@ -327,7 +327,7 @@ def write_and_quit(editor, location, force=False):
     Write file and quit.
     """
     write(editor, location, force=force)
-    editor.application.set_return_value(None)
+    editor.application.set_result(None)
 
 
 @cmd('cq')
@@ -338,7 +338,7 @@ def quit_nonzero(editor):
     # Note: the try/finally in `prompt_toolkit.Interface.read_input`
     # will ensure that the render output is reset, leaving the alternate
     # screen before quiting.
-    editor.application.set_return_value(None)
+    editor.application.set_result(None)
 
 
 @cmd('wqa')
