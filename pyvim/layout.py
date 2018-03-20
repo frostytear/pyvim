@@ -202,7 +202,7 @@ class BufferListOverlay(ConditionalContainer):
                     b = editor.command_buffer
 
                     if b.complete_state and any(info.editor_buffer.location in c.display
-                                                for c in b.complete_state.current_completions
+                                                for c in b.complete_state.completions
                                                 if info.editor_buffer.location is not None):
                         return True
 
