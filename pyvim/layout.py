@@ -15,7 +15,6 @@ from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.layout.processors import Processor, ConditionalProcessor, BeforeInput, ShowTrailingWhiteSpaceProcessor, Transformation, HighlightSelectionProcessor, HighlightSearchProcessor, HighlightIncrementalSearchProcessor, HighlightMatchingBracketProcessor, TabsProcessor, DisplayMultipleCursors
 from prompt_toolkit.layout.utils import explode_text_fragments
 from prompt_toolkit.mouse_events import MouseEventType
-from prompt_toolkit.reactive import Integer
 from prompt_toolkit.selection import SelectionType
 from prompt_toolkit.widgets.toolbars import FormattedTextToolbar, SystemToolbar, SearchToolbar, ValidationToolbar, CompletionsToolbar
 
@@ -526,8 +525,8 @@ class EditorLayout(object):
             allow_scroll_beyond_bottom=True,
             scroll_offsets=ScrollOffsets(
                 left=0, right=0,
-                top=Integer.from_callable(lambda: self.editor.scroll_offset),
-                bottom=Integer.from_callable(lambda: self.editor.scroll_offset)),
+                top=(lambda: self.editor.scroll_offset),
+                bottom=(lambda: self.editor.scroll_offset)),
             wrap_lines=wrap_lines,
             left_margins=[ConditionalMargin(
                     margin=NumberedMargin(
@@ -536,7 +535,7 @@ class EditorLayout(object):
                     filter=Condition(lambda: self.editor.show_line_numbers))],
             cursorline=Condition(lambda: self.editor.cursorline),
             cursorcolumn=Condition(lambda: self.editor.cursorcolumn),
-            get_colorcolumns=(
+            colorcolumns=(
                 lambda: [ColorColumn(pos) for pos in self.editor.colorcolumn]),
             ignore_content_width=True,
             ignore_content_height=True)
@@ -567,7 +566,7 @@ class EditorLayout(object):
 
             # Replace tabs by spaces.
             TabsProcessor(
-                tabstop=Integer.from_callable(lambda: self.editor.tabstop),
+                tabstop=(lambda: self.editor.tabstop),
                 get_char1=(lambda: '|' if self.editor.display_unprintable_characters else ' '),
                 get_char2=(lambda: _try_char('\u2508', '.', get_app().output.encoding())
                                        if self.editor.display_unprintable_characters else ' '),
