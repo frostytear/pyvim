@@ -6,7 +6,7 @@ from prompt_toolkit.application.current import get_app
 from prompt_toolkit.filters import has_focus, is_searching, Condition, has_arg
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.layout import HSplit, VSplit, FloatContainer, Float, Layout
-from prompt_toolkit.layout.containers import Window, ConditionalContainer, ColorColumn, Align, ScrollOffsets
+from prompt_toolkit.layout.containers import Window, ConditionalContainer, ColorColumn, WindowAlign, ScrollOffsets
 from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.dimension import Dimension
@@ -134,7 +134,7 @@ class WelcomeMessageWindow(ConditionalContainer):
         super(WelcomeMessageWindow, self).__init__(
             Window(
                 FormattedTextControl(lambda: WELCOME_MESSAGE_TOKENS),
-                align=Align.CENTER,
+                align=WindowAlign.CENTER,
                 style="class:welcome"),
             filter=Condition(condition))
 
@@ -380,7 +380,7 @@ class WindowStatusBarRuler(ConditionalContainer):
             Window(
                 FormattedTextControl(get_tokens),
                 char=' ',
-                align=Align.RIGHT,
+                align=WindowAlign.RIGHT,
                 style='class:toolbar.status',
                 height=1,
             ),
@@ -400,7 +400,7 @@ class SimpleArgToolbar(ConditionalContainer):
                 return []
 
         super(SimpleArgToolbar, self).__init__(
-            Window(FormattedTextControl(get_tokens), align=Align.RIGHT),
+            Window(FormattedTextControl(get_tokens), align=WindowAlign.RIGHT),
             filter=has_arg),
 
 
