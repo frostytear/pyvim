@@ -574,8 +574,8 @@ class EditorLayout(object):
             # Replace tabs by spaces.
             TabsProcessor(
                 tabstop=(lambda: self.editor.tabstop),
-                get_char1=(lambda: '|' if self.editor.display_unprintable_characters else ' '),
-                get_char2=(lambda: _try_char('\u2508', '.', get_app().output.encoding())
+                char1=(lambda: '|' if self.editor.display_unprintable_characters else ' '),
+                char2=(lambda: _try_char('\u2508', '.', get_app().output.encoding())
                                        if self.editor.display_unprintable_characters else ' '),
             ),
 

@@ -407,6 +407,15 @@ def pwd(editor):
     editor.show_message('{}'.format(directory))
 
 
+@location_cmd('cd', accepts_force=False)
+def pwd(editor, location):
+    " Change working directory. "
+    try:
+        os.chdir(location)
+    except OSError as e:
+        editor.show_message('{}'.format(e))
+
+
 @_cmd('colorscheme')
 @_cmd('colo')
 def color_scheme(editor, variables):
